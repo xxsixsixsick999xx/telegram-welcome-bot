@@ -1,6 +1,5 @@
 import os
 import asyncio
-from dotenv import load_dotenv
 
 from telegram import Update, InputFile
 from telegram.ext import (
@@ -11,36 +10,34 @@ from telegram.ext import (
     filters
 )
 
-# Load .env
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
+# Ambil token langsung dari environment variable Render
+TOKEN = os.environ.get("TOKEN")
+
+if not TOKEN:
+    raise ValueError("TOKEN tidak ditemukan. Tambahkan environment variable 'TOKEN' di Render.")
 
 # /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot sudah online bangsat 😎")
+    await update.message.reply_text("Bot sudah online 😎")
 
 # Echo message
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(update.message.text)
 
-# Welcome with Image
+# Welcome with image
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     for member in update.message.new_chat_members:
-
         username = member.username or member.full_name
         message = f"🎉 Selamat datang @{username}!\nSemoga betah di grup ini 😎"
 
-        # Kirim gambar welcome
         try:
-            photo = InputFile("welcome.jpg")  # harus ada file ini
+            photo = InputFile("welcome.jpg")  # pastikan file ada di folder project
             await update.message.reply_photo(photo=photo, caption=message)
         except Exception as e:
-            # fallback kalau gagal kirim foto
             await update.message.reply_text(message)
             print("Error sending welcome image:", e)
 
-# Main app
+# Main
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
@@ -50,7 +47,7 @@ async def main():
     # Echo
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # Welcome event
+    # Welcome
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
 
     print("BOT RUNNING...")
