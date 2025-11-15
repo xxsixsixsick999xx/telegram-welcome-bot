@@ -1,56 +1,24 @@
 import os
-import random
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# List GIF/Foto welcome
-WELCOME_MEDIA_LIST = [
-    "https://media.giphy.com/media/OkJat1YNdoD3W/giphy.gif",
-    "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
-    "https://media.giphy.com/media/3o6ZsX2T4Zn8L1J3DW/giphy.gif"
-]
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot sudah online cuy 🔥")
 
-async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.new_chat_members:
-        for member in update.message.new_chat_members:
-            media = random.choice(WELCOME_MEDIA_LIST)
-
-            keyboard = [
-                [InlineKeyboardButton("📢 Rules", url="https://example.com/rules")],
-                [InlineKeyboardButton("📌 Info", callback_data="info")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-
-            sent_message = await update.message.reply_animation(
-                animation=media,
-                caption=f"🎉 Selamat datang {member.mention_html()}!",
-                parse_mode="HTML",
-                reply_markup=reply_markup
-            )
-
-            # Auto-delete after 30 seconds
-            await asyncio.sleep(30)
-            await sent_message.delete()
-
-async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.data == "info":
-        await query.edit_message_caption(
-            caption="ℹ️ Info Grup: Grup untuk diskusi dan sharing.",
-            parse_mode="Markdown"
-        )
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(update.message.text)
 
 async def main():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(CallbackQueryHandler(callback_handler))
-    print("BOT RUNNING...")
+    app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
     await app.run_polling()
 
 if __name__ == "__main__":
