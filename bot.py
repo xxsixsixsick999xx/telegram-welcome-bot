@@ -1,40 +1,46 @@
 import os
 import asyncio
-
 from telegram import Update, InputFile, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
-    ContextTypes,
     CallbackQueryHandler,
-    filters
+    ContextTypes,
+    filters,
 )
 
+# Ambil TOKEN dari environment variable
 TOKEN = os.environ.get("TOKEN")
-
 if not TOKEN:
     raise ValueError("TOKEN tidak ditemukan. Tambahkan environment variable 'TOKEN' di Render.")
 
-# /start command
+# Command /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot sudah online 😎")
 
-# Echo
+# Echo text biasa
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(update.message.text)
 
-# Callback untuk button
+# Callback dari button
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     if query.data == "rules":
-        await query.edit_message_text("📜 Rules:\n1. Hormati semua member\n2. Tidak spam\n3. Enjoy!")
+        await query.edit_message_text(
+            "📜 Rules:\n1. Hormati semua member\n2. Tidak spam\n3. Enjoy!"
+        )
     elif query.data == "info":
-        await query.edit_message_text("ℹ️ Info Grup:\nBot ini dibuat untuk menyambut member baru.")
+        await query.edit_message_text(
+            "ℹ️ Info Grup:\nBot ini dibuat untuk menyambut member baru."
+        )
 
-# Welcome member
+# Welcome member baru dengan gambar
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message.new_chat_members:
+        return
+
     for member in update.message.new_chat_members:
         username = member.username or member.full_name
         message = f"🎉 Selamat datang @{username}!\nSemoga betah di grup ini 😎"
@@ -46,19 +52,26 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         try:
-            photo = InputFile("welcome.jpg")
+            photo = InputFile("welcome.jpg")  # pastikan file ada di project folder
             await update.message.reply_photo(photo=photo, caption=message, reply_markup=reply_markup)
         except Exception as e:
             await update.message.reply_text(message, reply_markup=reply_markup)
             print("Error sending welcome image:", e)
 
-# Main
+# Main function
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
+    # Command handlers
     app.add_handler(CommandHandler("start", start))
+    
+    # Echo semua pesan text
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    
+    # Welcome handler
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
+    
+    # Button callback handler
     app.add_handler(CallbackQueryHandler(button_callback))
 
     print("BOT RUNNING...")
