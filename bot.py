@@ -1,9 +1,10 @@
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, MessageHandler, CallbackQueryHandler, filters, ContextTypes
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 TOKEN = os.getenv("BOT_TOKEN")
 WELCOME_MEDIA = "https://media.giphy.com/media/OkJat1YNdoD3W/giphy.gif"
 
@@ -11,8 +12,8 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.new_chat_members:
         for member in update.message.new_chat_members:
             keyboard = [
-                [InlineKeyboardButton("📢 Peraturan Grup", url="https://example.com/rules")],
-                [InlineKeyboardButton("📌 Info Grup", callback_data="info")]
+                [InlineKeyboardButton("📢 Rules", url="https://example.com/rules")],
+                [InlineKeyboardButton("📌 Info", callback_data="info")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_animation(
@@ -27,7 +28,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     if query.data == "info":
         await query.edit_message_caption(
-            caption="ℹ️ Info Grup: Grup ini dibuat untuk diskusi.",
+            caption="ℹ️ Info Grup: Grup untuk diskusi dan sharing.",
             parse_mode="Markdown"
         )
 
