@@ -5,6 +5,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
+    CallbackQueryHandler
 )
 from dotenv import load_dotenv
 
@@ -12,11 +13,8 @@ load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-# URL Foto / GIF
-WELCOME_MEDIA = "https://media.giphy.com/media/OkJat1YNdoD3W/giphy.gif"  # GIF
-# WELCOME_MEDIA = "https://example.com/welcome.jpg"  # FOTO (opsional)
+WELCOME_MEDIA = "https://media.giphy.com/media/OkJat1YNdoD3W/giphy.gif"
 
-# Hapus pesan welcome setelah sekian detik (0 = tidak dihapus)
 AUTO_DELETE_SECONDS = 20
 
 
@@ -24,7 +22,6 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.new_chat_members:
         for member in update.message.new_chat_members:
 
-            # Tombol
             keyboard = [
                 [
                     InlineKeyboardButton("📢 Peraturan Grup", url="https://example.com/rules"),
@@ -36,7 +33,6 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            # Kirim GIF / Foto dengan caption
             msg = await update.message.reply_animation(
                 animation=WELCOME_MEDIA,
                 caption=(
@@ -48,19 +44,13 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML"
             )
 
-            # Auto delete jika diaktifkan
             if AUTO_DELETE_SECONDS > 0:
-                await context.bot.delete_message(
-                    chat_id=update.message.chat_id,
-                    message_id=update.message.message_id,
-                )
                 await context.job_queue.run_once(
                     lambda ctx: ctx.bot.delete_message(update.message.chat_id, msg.message_id),
                     AUTO_DELETE_SECONDS
                 )
 
 
-# Handler tombol callback
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -76,9 +66,9 @@ async def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-    app.add_handler(MessageHandler(filters.ALL & filters.UpdateType.CALLBACK_QUERY, callback_handler))
+    app.add_handler(CallbackQueryHandler(callback_handler))
 
-    print("BOT RUNNING ON RENDER...")
+    print("BOT RUNNING...")
     await app.run_polling()
 
 
